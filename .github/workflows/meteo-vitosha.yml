@@ -1,0 +1,90 @@
+name: Meteo Vitosha
+
+#on: push
+on:
+  schedule:
+    - cron:  '*/5 * * * *'
+#    - cron:  '*/15 * * * *'
+#    - cron:  '*/35 * * * *'
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: pages
+      - shell: bash
+        run: |
+          changes="false"
+          response="$(curl 'https://weather.bg/index.php?koiFail=tekushti&lng=0')"
+          basefolder="data/meteo/vitosha"
+
+          # measurement
+          measurement_newdata="$(echo "${response}" | grep -Po '<tr><td>Черни връх</td>.*?</tr>')"
+          measurement_targetfile="${basefolder}/measurement/$(date +%Y).txt"
+          if [ -f "${measurement_targetfile}" ]; then
+            measurement_olddata="$(tail -n1 "${measurement_targetfile}" || true)"
+          else
+            measurement_olddata="$(tail -n1 "${basefolder}/measurement/$(( $(date +%Y) - 1 )).txt" || true)"
+          fi
+
+          if [ "${measurement_newdata}" != "${measurement_olddata}" ]; then
+            changes="true"
+            mkdir -p "$(dirname "${measurement_targetfile}")"
+            echo "${measurement_newdata}" >> "${measurement_targetfile}"
+          fi
+
+          # comfort
+          comfort_newdata="$(echo "${response}" | tr -d '\n' | grep -Po "<tr>        <td>Черни връх</td>.*?</tr>" || true)"
+          if [ "${comfort_newdata}" != "" ]; then
+            comfort_date="$(echo "${response}" | grep 'Индекс на комфорт в синоптичните ни станции на' | sed -n 's/.*Индекс на комфорт в синоптичните ни станции на \([^ ]*\) в \([^ ]*\).*/<td>\1<\/td><td>\2<\/td>/p')"
+            comfort_newdata="$(echo "${comfort_newdata}" | sed -n "s|<td>Черни връх</td>|<td>Черни връх</td>${comfort_date}|p")"
+
+            comfort_targetfile="${basefolder}/comfort/$(date +%Y).txt"
+            if [ -f "${comfort_targetfile}" ]; then
+              comfort_olddata="$(tail -n1 "${comfort_targetfile}" || true)"
+            else
+              comfort_olddata="$(tail -n1 "${basefolder}/comfort/$(( $(date +%Y) - 1 )).txt" || true)"
+            fi
+
+            if [ "${comfort_newdata}" != "${comfort_olddata}" ]; then
+              changes="true"
+              mkdir -p "$(dirname "${comfort_targetfile}")"
+              echo "${comfort_newdata}" >> "${comfort_targetfile}"
+            fi
+          fi
+
+          # snow
+          snow_response="$(curl 'https://hydro.bg/bg/t1.php?ime=&gr=data/&gn=sniag')"
+          snow_date="$(echo "${snow_response}" | grep "Ежедневни данни за снежната покривка" | sed -nE 's/.*([0-9][0-9]?\.[0-9][0-9]?\.[0-9][0-9][0-9][0-9]).*/\1/p' || true)"
+          if [ "${snow_date}" != "" ]; then
+            snow_info="$(echo "${snow_response}" | grep -A 2 "Черни връх" | tail -n 1 | sed -nE 's!.*>([0-9]*)\|([^|]+)\|[^0-9]*([0-9]*)[^0-9]*.*!<td>\1</td><td>\2</td><td>\3</td>!p')"
+            snow_newdata="<tr><td>${snow_date}</td>${snow_info}</tr>"
+
+            snow_targetfile="${basefolder}/snow/$(date +%Y).txt"
+            if [ -f "${snow_targetfile}" ]; then
+              snow_olddata="$(tail -n1 "${snow_targetfile}" || true)"
+            else
+              snow_olddata="$(tail -n1 "${basefolder}/snow/$(( $(date +%Y) - 1 )).txt" || true)"
+            fi
+
+            if [ "${snow_newdata}" != "${snow_olddata}" ]; then
+              changes="true"
+              mkdir -p "$(dirname "${snow_targetfile}")"
+              echo "${snow_newdata}" >> "${snow_targetfile}"
+            fi
+          fi
+
+          # commit if new data is available
+          if [ "${changes}" == "true" ]; then
+            git config --global user.name 'Meteo Vitosha workflow'
+            git config --global user.email 'ptanov@users.noreply.github.com'
+            git add "${basefolder}"
+            git commit -m "Report at $(date +"%Y-%m-%dT%H:%M:%S%z")"
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
+            git push
+          fi
+
