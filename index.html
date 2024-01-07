@@ -1,73 +1,82 @@
 <!DOCTYPE html>
-<html>
-	<!-- based on https://www.w3schools.com/howto/howto_html_include.asp -->
-	<script>
-	function includeHTML() {
-		var z, i, elmnt, file, xhttp;
-		/* Loop through a collection of all HTML elements: */
-		z = document.getElementsByTagName("*");
-		for (i = 0; i < z.length; i++) {
-			elmnt = z[i];
-			/*search for elements with a certain atrribute:*/
-			file = elmnt.getAttribute("w3-include-html");
-			if (file) {
-				/* Make an HTTP request using the attribute value as the file name: */
-				xhttp = new XMLHttpRequest();
-				xhttp.onreadystatechange = function() {
-					if (this.readyState == 4) {
-						if (this.status == 200) {elmnt.innerHTML = elmnt.innerHTML + this.responseText;}
-						if (this.status == 404) {elmnt.innerHTML = "Can't load data";}
-						/* Remove the attribute, and call this function once more: */
-						elmnt.removeAttribute("w3-include-html");
-						includeHTML();
-					}
-				}
-				xhttp.open("GET", file, true);
-				xhttp.send();
-				/* Exit the function: */
-				return;
-			}
-		}
-	}
-	</script>
-	<body>
-		<h1>dataarchive</h1>
-		
-		<table border="1" w3-include-html="data/meteo/vitosha/measurement/2024.txt">
-			<tr>
-				<th>Станция</th>
-				<th>Дата</th>
-				<th>&nbsp;Час&nbsp;</th>
-				<th>Температура<br>[°C]</th>
-				<th>Време</th>
-				<th>Вятър-скорост<br>[m/s]</th>
-				<th>Вятър-посока</th>
-				<th>Налягане<br>[hPa]</th>
-			</tr>
-		</table>
-		<table border="1" w3-include-html="data/meteo/vitosha/comfort/2024.txt">
-			<tr>
-				<th rowspan="2">Станция</th>
-				<th rowspan="2">Дата</th>
-				<th rowspan="2">&nbsp;Час&nbsp;</th>
-				<th colspan="4">Измерени</th>
-				<th colspan="3">Изчислени</th>
-			</tr>
-			<tr>
-				<th>Температура<br>[°C]</th>
-				<th>Относителна влажност<br>[%]</th>
-				<th>Вятър-скорост<br>[m/s]</th>
-				<th>Облачност<br>[десети]</th>
-				<th>Температура на усещане<br>[°C]</th>
-				<th>Индекс на комфорт</th>
-				<th>Препоръчително облекло</th>
-			</tr>
-		</table>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Data Archive Meteo Vitosha</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Data Archive Meteo Vitosha</h1>
+    <div class="filter-section">
+      <label for="fromDate">From:</label>
+      <input type="date" id="fromDate">
+      <label for="toDate">To:</label>
+      <input type="date" id="toDate">
+      <label for="sortOrder">Sort:</label>
+      <select id="sortOrder">
+        <option value="desc">Newest First</option>
+        <option value="asc">Oldest First</option>
+      </select>
+      <label for="units">Units:</label>
+      <select id="units">
+        <option value="kmh">KM/H</option>
+        <option value="ms">M/S</option>
+      </select>
+      <button onclick="loadData()">Apply</button>
+    </div>
+    <!--
+    <div class="chart-container">
+      <canvas id="chart"></canvas>
+    </div>
+    -->
 
-		<script>
-			includeHTML();
-		</script>
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Температура, °C</th>
+          <th>Температура на усещане, °C</th>
+          <th>Време</th>
+          <th id="windHeader">Вятър-скорост, m/s</th>
+          <th>Вятър-посока</th>
+          <th>Нов снеговалеж</th>
+          <th>Тип</th>
+          <th>Снежна покривка</th>
+          <th>Относителна влажност, %</th>
+          <th>Налягане, hPa</th>
+          <th>Облачност, десети</th>
+          <th>Индекс на комфорт</th>
+          <th>Препоръчително облекло</th>
+          <th>Източник</th>
+        </tr>
+      </thead>
+      <tbody id="dataBody">
+      </tbody>
+    </table>
+    <div class="legal-info">
+      <p>Legal Information:</p>
+      <p>Project Data License</p>
 
-	</body>
+      <p>This project, including but not limited to the data utilized within, is not intended for commercial use. The data incorporated herein is obtained from National Institute of Meteorology and Hydrology (NIMH) - publicly available sources such as <a href="https://weather.bg/index.php?koiFail=tekushti&lng=0">https://weather.bg/index.php?koiFail=tekushti&lng=0</a> and <a href="https://hydro.bg/bg/t1.php?ime=&gr=data/&gn=sniag">https://hydro.bg/bg/t1.php?ime=&gr=data/&gn=sniag</a>. It is important to note that I do not claim ownership of this data, and I do not guarantee its accuracy or reliability.</p>
+
+      <p>Users or individuals interested in utilizing the data from this project are required to seek permission directly from the sources of the aforementioned data. It is the responsibility of the users to ensure compliance with the terms and conditions set forth by the data sources.</p>
+
+      <p>Furthermore, please find the link to the source code of this project: <a href="https://github.com/ptanov/dataarchive">https://github.com/ptanov/dataarchive</a></p>
+
+      <p>DISCLAIMER OF WARRANTY: The data provided in this project is provided "as is," without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement. The entire risk as to the quality and accuracy of the data is with the user.</p>
+
+      <p>LIMITATION OF LIABILITY: In no event shall the author be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the use or performance of the data or this project.</p>
+
+      <p>By accessing, using, or interacting with this project or its associated data, you agree to abide by the terms and conditions outlined above.</p>
+
+      <p>DataArchive, <a href="https://github.com/ptanov/dataarchive">https://github.com/ptanov/dataarchive</a></p>
+      <p>08.01.2023</p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
 </html>
 
