@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+	<!-- based on https://www.w3schools.com/howto/howto_html_include.asp -->
+	<script>
+	function includeHTML() {
+		var z, i, elmnt, file, xhttp;
+		/* Loop through a collection of all HTML elements: */
+		z = document.getElementsByTagName("*");
+		for (i = 0; i < z.length; i++) {
+			elmnt = z[i];
+			/*search for elements with a certain atrribute:*/
+			file = elmnt.getAttribute("w3-include-html");
+			if (file) {
+				/* Make an HTTP request using the attribute value as the file name: */
+				xhttp = new XMLHttpRequest();
+				xhttp.onreadystatechange = function() {
+					if (this.readyState == 4) {
+						if (this.status == 200) {elmnt.innerHTML = elmnt.innerHTML + this.responseText;}
+						if (this.status == 404) {elmnt.innerHTML = "Can't load data";}
+						/* Remove the attribute, and call this function once more: */
+						elmnt.removeAttribute("w3-include-html");
+						includeHTML();
+					}
+				}
+				xhttp.open("GET", file, true);
+				xhttp.send();
+				/* Exit the function: */
+				return;
+			}
+		}
+	}
+	</script>
+	<body>
+		<h1>dataarchive</h1>
+		
+		<table border="1" w3-include-html="data/meteo/vitosha/measurement/2024.txt">
+			<tr>
+				<th>Станция</th>
+				<th>Дата</th>
+				<th>&nbsp;Час&nbsp;</th>
+				<th>Температура<br>[°C]</th>
+				<th>Време</th>
+				<th>Вятър-скорост<br>[m/s]</th>
+				<th>Вятър-посока</th>
+				<th>Налягане<br>[hPa]</th>
+			</tr>
+		</table>
+		<table border="1" w3-include-html="data/meteo/vitosha/comfort/2024.txt">
+			<tr>
+				<th rowspan="2">Станция</th>
+				<th rowspan="2">Дата</th>
+				<th rowspan="2">&nbsp;Час&nbsp;</th>
+				<th colspan="4">Измерени</th>
+				<th colspan="3">Изчислени</th>
+			</tr>
+			<tr>
+				<th>Температура<br>[°C]</th>
+				<th>Относителна влажност<br>[%]</th>
+				<th>Вятър-скорост<br>[m/s]</th>
+				<th>Облачност<br>[десети]</th>
+				<th>Температура на усещане<br>[°C]</th>
+				<th>Индекс на комфорт</th>
+				<th>Препоръчително облекло</th>
+			</tr>
+		</table>
+
+		<script>
+			includeHTML();
+		</script>
+
+	</body>
+</html>
+
