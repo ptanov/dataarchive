@@ -1,1 +1,2 @@
 <tr><td>7.01.2024</td><td>1</td><td> v </td><td>62</td></tr>
+<tr><td>8.01.2024</td><td>8</td><td> v </td><td>64</td></tr>
