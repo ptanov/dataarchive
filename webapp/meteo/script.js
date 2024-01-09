@@ -84,7 +84,8 @@ function parseSnow(html) {
 
 	const result = /<tr><td>([^<]+)<\/td><td>([^<]+)<\/td><td>([^<]+)<\/td><td>([^<]+)<\/td><\/tr>/.exec(html);
 	const dateRaw = /(\d\d?)\.(\d\d?)\.(\d+\d+\d+\d+)/.exec(result[1])
-	const datetime = new Date(`${dateRaw[3]}-${dateRaw[2]}-${dateRaw[1]}`);
+	// the date here is the day before but we want to see it like the reading is for "this morning"
+	const datetime = new Date(new Date(`${dateRaw[3]}-${dateRaw[2]}-${dateRaw[1]}`).getTime() + 24 * 60 * 60 * 1000);
 	return {date: datetime, newSnow: result[2], newType: type[result[3]] || result[3], snowCover: result[4], source: "snow"};
 }
 
@@ -116,15 +117,15 @@ function loadData() {
 	const all = [];
 	
 	const years = Array(toYear - fromYear + 1).fill(0).map((x, y) => x + y + fromYear);
-	const measurement = Promise.all(years.map(y => fetch(`data/meteo/vitosha/measurement/${y}.txt`)))
+	const measurement = Promise.all(years.map(y => fetch(`../../data/meteo/vitosha/measurement/${y}.txt`)))
 		.then(ps => Promise.all(ps.filter(p => p.ok).map(p => p.text())))
 		.then(responses => responses.flatMap(text => text.split(/\r?\n/)).filter(notempty => notempty).map(a => parseMeasurement(a, units)));
 
-	const comfort = Promise.all(years.map(y => fetch(`data/meteo/vitosha/comfort/${y}.txt`)))
+	const comfort = Promise.all(years.map(y => fetch(`../../data/meteo/vitosha/comfort/${y}.txt`)))
 		.then(ps => Promise.all(ps.filter(p => p.ok).map(p => p.text())))
 		.then(responses => responses.flatMap(text => text.split(/\r?\n/)).filter(notempty => notempty).map(a => parseComfort(a, units)));
 
-	const snow = Promise.all(years.map(y => fetch(`data/meteo/vitosha/snow/${y}.txt`)))
+	const snow = Promise.all(years.map(y => fetch(`../../data/meteo/vitosha/snow/${y}.txt`)))
 		.then(ps => Promise.all(ps.filter(p => p.ok).map(p => p.text())))
 		.then(responses => responses.flatMap(text => text.split(/\r?\n/)).filter(notempty => notempty).map(a => parseSnow(a)));
 
