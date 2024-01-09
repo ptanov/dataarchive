@@ -50,7 +50,10 @@ jobs:
               comfort_olddata="$(tail -n1 "${basefolder}/comfort/$(( $(date +%Y) - 1 )).txt" || true)"
             fi
 
-            if [ "${comfort_newdata}" != "${comfort_olddata}" ]; then
+            # if [ "${comfort_newdata}" != "${comfort_olddata}" ]; then
+            # every night at 11p.m. the operator creates a dublicated record e.g. on 08.01 there will be one extra record 09.01 23:00 (in the future) that is exactly the same as the one at 08.01 23:00
+            # so we are removing date part and then we check for hour + data part
+            if [ "$(echo "${comfort_newdata}" | sed -nE 's/.*?<td>.*?<td>(.*)/\1/p' )" != "$(echo "${comfort_olddata}" | sed -nE 's/.*?<td>.*?<td>(.*)/\1/p')" ]; then
               changes="true"
               mkdir -p "$(dirname "${comfort_targetfile}")"
               echo "${comfort_newdata}" >> "${comfort_targetfile}"

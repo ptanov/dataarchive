@@ -1,8 +1,20 @@
-# dataarchive
+# Data archive
+
+Cherni vrah's archive meteo data is available here: <https://ptanov.github.io/dataarchive/webapp/meteo/>
+
+# Motivation
+
+Various sources of data doesn't keep track of the old values, but only information for the current moment, e.g. NIMH provides information about the current situation at their meteo stations (e.g. Cherni vrah) but you can't find information about any past moments (e.g. what was the weather on the previous day).
+
+This project (in a hackish way) uses github workflows to poll and save this data in github.
+
+Actual workflow is <https://github.com/ptanov/dataarchive/blob/master/.github/workflows/meteo-vitosha.yml> and collected data is stored in github pages: <https://github.com/ptanov/dataarchive/tree/pages/data/>.
+
+Also there is some ugly visualization of the available data here: <https://ptanov.github.io/dataarchive/>
 
 # Project Data License
 
-The code is licensed under Apache License Version 2.0, check LICENSE in the root folder. However the owner of the actually downloaded data is National Institute of Meteorology and Hydrology (NIMH):
+The code is licensed under Apache License Version 2.0, check LICENSE in the root folder. However the owner of the actually downloaded data (folder `data/` in branch `pages`) is National Institute of Meteorology and Hydrology (NIMH):
 
 This project, including but not limited to the data utilized within, is not intended for commercial use. The data incorporated herein is obtained from National Institute of Meteorology and Hydrology (NIMH) - publicly available sources such as https://weather.bg/index.php?koiFail=tekushti&lng=0 and https://hydro.bg/bg/t1.php?ime=&gr=data/&gn=sniag. It is important to note that I do not claim ownership of this data, and I do not guarantee its accuracy or reliability.
 
