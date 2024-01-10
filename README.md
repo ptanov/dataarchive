@@ -1,6 +1,8 @@
 # Data archive
 
-Cherni vrah's archive meteo data is available here: <https://ptanov.github.io/dataarchive/webapp/meteo/>
+- Cherni vrah's archive meteo data is available here: <https://ptanov.github.io/dataarchive/webapp/meteo/>
+
+- Cherni vrah's archive meteo raw data is available here: <https://github.com/ptanov/dataarchive/tree/pages/data/meteo/>, <https://blog.plamen.name/dataarchive/data/meteo/vitosha/measurement/2024.html>, <https://ptanov.github.io/dataarchive/data/meteo/vitosha/comfort/2024.html>, <https://blog.plamen.name/dataarchive/data/meteo/vitosha/snow/2024.html>
 
 # Motivation
 
@@ -10,7 +12,7 @@ This project (in a hackish way) uses github workflows to poll and save this data
 
 Actual workflow is <https://github.com/ptanov/dataarchive/blob/master/.github/workflows/meteo-vitosha.yml> and collected data is stored in github pages: <https://github.com/ptanov/dataarchive/tree/pages/data/>.
 
-Also there is some ugly visualization of the available data here: <https://ptanov.github.io/dataarchive/>
+Also there is some ugly visualization of the available data here: <https://ptanov.github.io/dataarchive/> (source code is here: <https://github.com/ptanov/dataarchive/tree/pages/webapp/>)
 
 # Project Data License
 
