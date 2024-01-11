@@ -9,7 +9,9 @@ function populateTable(data) {
 	tableBody.innerHTML = '';
 	data.forEach(entry => {
 		const row = document.createElement('tr');
-		row.innerHTML = `<td><b>${entry.date.getHours() ? (entry.date.getHours() + ":00") : ""}</b><br />${entry.date.getFullYear()}-${entry.date.getMonth() + 1}-${entry.date.getDate()}</td><td>${entry.temperature ? (entry.temperature + (Math.round(Math.abs(entry.temperature)) == Math.abs(entry.temperatureFromMeasurement) ? "" : (" ("+entry.temperatureFromMeasurement+")"))) : ""}</td><td>${entry.feelsLike || ""}</td><td>${entry.source == "snow" ? ("<b>нов валеж: " + entry.newSnow + "<br />тип: " + entry.newType + "<br />снежна покривка: " + (entry.snowCover || "0")) : entry.status || ""}<b/></td><td>${entry.wind ? (entry.wind + (entry.wind == entry.windFromComfort ? "" : (" ("+entry.windFromComfort+")"))) : ""}, ${entry.windDirection || ""}</td>
+		const temperature = entry.temperature ? (entry.temperature + (!entry.temperatureFromMeasurement || Math.round(Math.abs(entry.temperature)) == Math.abs(entry.temperatureFromMeasurement) ? "" : (" ("+entry.temperatureFromMeasurement+")"))) : "";
+		const windSpeed = entry.windSpeed ? (entry.windSpeed + (!entry.windSpeedFromComfort || (entry.windSpeed == entry.windSpeedFromComfort) ? "" : (" ("+entry.windSpeedFromComfort+")"))) : "";
+		row.innerHTML = `<td><b>${entry.date.getHours() ? (entry.date.getHours() + ":00") : ""}</b><br />${entry.date.getFullYear()}-${entry.date.getMonth() + 1}-${entry.date.getDate()}</td><td>${temperature}</td><td>${entry.feelsLike || ""}</td><td>${entry.source == "snow" ? ("<b>нов валеж: " + entry.newSnow + "<br />тип: " + entry.newType + "<br />снежна покривка: " + (entry.snowCover || "0")) : entry.status || ""}<b/></td><td>${windSpeed}${entry.windDirection ? ", " + entry.windDirection : ""}</td>
 		<td>${entry.humidity || ""}</td><td>${entry.pressure || ""}</td><td>${entry.cloud || ""}</td><td>${entry.comfortIndex || ""}</td>
 		<td>${entry.recomendedEquipment || ""}</td><td>данни: <a href="../../data/meteo/vitosha/measurement/${entry.date.getFullYear()}.html" target="_blank">измервания</a>, <a href="../../data/meteo/vitosha/comfort/${entry.date.getFullYear()}.html" target="_blank">комфорт</a>, <a href="../../data/meteo/vitosha/snow/${entry.date.getFullYear()}.html" target="_blank">сняг</a><br />${sources[entry.source]}</td>`;
 		tableBody.appendChild(row);
@@ -17,86 +19,127 @@ function populateTable(data) {
 }
 
 function populateChart(data) {
-	const dates = data.filter(a => a.source != "snow").map(entry => `${entry.date.getFullYear()}-${entry.date.getMonth() + 1}-${entry.date.getDate()}${entry.date.getHours() ? (" " + entry.date.getHours() + ":00") : ""}`);
-	const temperature = data.filter(a => a.source != "snow").map(entry => entry.temperature);
-	const feelsLike = data.filter(a => a.source != "snow").map(entry => entry.feelsLike);
-	const wind = data.filter(a => a.source != "snow").map(entry => entry.wind);
-	const humidity = data.filter(a => a.source != "snow").map(entry => entry.humidity);
-	const pressure = data.filter(a => a.source != "snow").map(entry => entry.pressure);
-	const cloud = data.filter(a => a.source != "snow").map(entry => entry.cloud);
-	// const comfortIndex = data.filter(a => a.source != "snow").map(entry => entry.comfortIndex);
-	// const recomendedEquipment = data.filter(a => a.source != "snow").map(entry => entry.recomendedEquipment);
-
 	const shouldReverse = document.getElementById('sortOrder').value == "desc";
+	const filtered = (shouldReverse?data.reverse():data).filter(a => a.source != "snow");
+	filtered.forEach(entry => entry.x = `${entry.date.getFullYear()}-${entry.date.getMonth() + 1}-${entry.date.getDate()}${entry.date.getHours() ? (" " + entry.date.getHours() + ":00") : ""}`);
+	
 	const chartStatus = Chart.getChart("chart");
 	if (chartStatus) {
 		chartStatus.destroy();
 	}
-	const ctx = document.getElementById('chart').getContext('2d');
-
-	new Chart(ctx, {
+	new Chart(document.getElementById('chart').getContext('2d'), {
 		type: 'line',
 		data: {
-			labels: shouldReverse?dates.reverse():dates,
 			datasets: [
 				{
 					label: 'Temperature',
-					data: shouldReverse?temperature.reverse():temperature,
+					data: filtered,
 					borderColor: 'rgb(255, 99, 132)',
 					backgroundColor: 'rgba(255, 99, 132, 0.2)',
 					yAxisID: 'y-axis-temperature',
+					pointRadius: 5,
+					parsing: {
+						yAxisKey: 'temperature'
+					},
 				},
 				{
 					label: 'Feels Like',
-					data: shouldReverse?feelsLike.reverse():feelsLike,
+					data: filtered,
 					borderColor: 'rgb(170, 0, 0)',
 					backgroundColor: 'rgba(54, 162, 235, 0.2)',
 					yAxisID: 'y-axis-temperature',
+					pointRadius: 5,
+					parsing: {
+						yAxisKey: 'feelsLike'
+					},
 				},
 				{
 					label: 'Wind',
-					data: shouldReverse?wind.reverse():wind,
+					data: filtered,
 					borderColor: 'rgb(0, 162, 0)',
 					backgroundColor: 'rgba(54, 162, 235, 0.2)',
-					yAxisID: 'y-axis-wind',
+					yAxisID: 'y-axis-windSpeed',
+					pointRadius: 5,
+					parsing: {
+						yAxisKey: 'windSpeed'
+					},
+					pointStyle: element => {
+						if (["S", "N", "W", "E", "SW", "NW", "NE", "SE"].includes(element.raw.windDirection)) {
+							var cloud = new Image();
+							cloud.src = `images/${element.raw.windDirection}.png`;
+							return cloud;
+						}
+						return "circle"
+					},
 				},
 				{
 					label: 'Humidity',
-					data: shouldReverse?humidity.reverse():humidity,
+					data: filtered,
 					borderColor: 'rgb(54, 162, 235)',
 					backgroundColor: 'rgba(54, 162, 235, 0.2)',
 					yAxisID: 'y-axis-humidity',
+					pointRadius: 5,
+					parsing: {
+						yAxisKey: 'humidity'
+					},
 				},
 				{
 					label: 'Pressure',
-					data: shouldReverse?pressure.reverse():pressure,
-					borderColor: 'rgb(0, 0, 235)',
+					data: filtered,
+					borderColor: '#FFA500',
 					backgroundColor: 'rgba(54, 162, 235, 0.2)',
 					yAxisID: 'y-axis-pressure',
+					pointRadius: 5,
+					parsing: {
+						yAxisKey: 'pressure'
+					},
 				},
 				{
 					label: 'Cloud',
-					data: shouldReverse?cloud.reverse():cloud,
+					data: filtered,
 					borderColor: 'rgb(128, 128, 128)',
 					backgroundColor: 'rgba(54, 162, 235, 0.2)',
 					yAxisID: 'y-axis-cloud',
+					pointRadius: 5,
+					parsing: {
+						yAxisKey: 'cloud'
+					},
+					pointStyle: element => {
+						if (element.raw.status) {
+							const result = /.*'([^']+)'.*/.exec(element.raw.status);
+							var cloud = new Image();
+							cloud.src = result[1];
+							cloud.height=30;
+							cloud.width=30*75/60;
+							return cloud;
+						}
+						return "circle"
+					},
 				},
-				/*
 				{
 					label: 'Comfort index',
-					data: shouldReverse?comfortIndex.reverse():comfortIndex,
-					borderColor: 'rgb(54, 162, 235)',
+					data: filtered,
+					borderColor: '#000077',
 					backgroundColor: 'rgba(54, 162, 235, 0.2)',
-					yAxisID: 'y-axis-comfort_index',
+					yAxisID: 'y-axis-cloud',
+					pointRadius: 5,
+					parsing: {
+						yAxisKey: 'comfortIndex'
+					},
+					hidden: true,
 				},
 				{
 					label: 'Recomended Equipment',
-					data: shouldReverse?recomendedEquipment.reverse():recomendedEquipment,
-					borderColor: 'rgb(54, 162, 235)',
+					data: filtered,
+					borderColor: '#000000',
 					backgroundColor: 'rgba(54, 162, 235, 0.2)',
-					yAxisID: 'y-axis-recommended-equipment',
+					yAxisID: 'y-axis-cloud',
+					pointRadius: 5,
+					parsing: {
+						yAxisKey: 'recomendedEquipment'
+					},
+					hidden: true,
 				},
-				*/
 			],
 		},
 		options: {
@@ -112,6 +155,28 @@ function populateChart(data) {
 					position: 'right',
 				},
 			},
+			tooltips: {
+				mode: "label"
+			},
+			interaction: {
+				intersect: false,
+				mode: 'index',
+			},
+			plugins: {
+				tooltip: {
+					callbacks: {
+						afterLabel: context=>{
+							if (context.dataset.parsing.yAxisKey == "cloud") {
+								const result = /.*>(.*)/.exec(context.raw.status);
+								return result[1];
+							}
+							if (context.dataset.parsing.yAxisKey == "windSpeed") {
+								return context.raw.windDirection;
+							}
+						},
+					}
+				}
+			},
 		},
 	});
 }
@@ -126,7 +191,7 @@ function parseMeasurement(html, units) {
 		hour: parseInt(result[2]),
 		temperature: result[3],
 		status: result[4],
-		wind: convert(result[5], units),
+		windSpeed: convert(result[5], units),
 		windDirection: result[6],
 		pressure: result[7],
 		source: "measurement"
@@ -150,7 +215,7 @@ function parseComfort(html, units) {
 		hour: datetime.getHours(),
 		temperature: result[3],
 		humidity: result[4],
-		wind: convert(result[5], units),
+		windSpeed: convert(result[5], units),
 		cloud: result[6] + 0,
 		feelsLike: result[7],
 		comfortIndex: result[8],
@@ -211,7 +276,6 @@ function filterSortAndGroupData(all, fromDate, toDate) {
 	} else {
 		filteredData.sort((a, b) => (a.date < b.date ? 1 : (a.date == b.date ? (a.hour < b.hour ? 1 : -1) : -1)));
 	}
-	
 	for (let i = filteredData.length - 1; i>0; i--) {
 		next = filteredData[i];
 		previous = filteredData[i - 1];
@@ -224,8 +288,8 @@ function filterSortAndGroupData(all, fromDate, toDate) {
 			fromComfort.windDirection = fromMeasurement.windDirection;
 			fromComfort.pressure = fromMeasurement.pressure;
 			fromComfort.temperatureFromMeasurement = fromMeasurement.temperature;
-			fromComfort.windFromComfort = fromComfort.wind;
-			fromComfort.wind = fromMeasurement.wind;
+			fromComfort.windSpeedFromComfort = fromComfort.windSpeed;
+			fromComfort.windSpeed = fromMeasurement.windSpeed;
 			fromComfort.source = "measurement+comfort";
 			
 			filteredData[i - 1] = fromComfort;
