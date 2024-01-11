@@ -66,7 +66,7 @@ jobs:
 
           # snow
           snow_response="$(curl 'https://hydro.bg/bg/t1.php?ime=&gr=data/&gn=sniag')"
-          snow_date="$(echo "${snow_response}" | grep "Ежедневни данни за снежната покривка" | sed -nE 's/.*([0-9][0-9]?\.[0-9][0-9]?\.[0-9][0-9][0-9][0-9]).*/\1/p' || true)"
+          snow_date="$(echo "${snow_response}" | grep "Ежедневни данни за снежната покривка" | sed -nE 's/.*\s([0-9][0-9]?\.[0-9][0-9]?\.[0-9][0-9][0-9][0-9]).*/\1/p' || true)"
           if [ "${snow_date}" != "" ]; then
             snow_info="$(echo "${snow_response}" | grep -A 2 "Черни връх" | tail -n 1 | sed -nE 's!.*>([0-9]*)\|([^|]+)\|[^0-9]*([0-9]*)[^0-9]*.*!<td>\1</td><td>\2</td><td>\3</td>!p')"
             snow_newdata="<tr><td>${snow_date}</td>${snow_info}</tr>"
