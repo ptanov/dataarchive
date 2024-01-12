@@ -1,3 +1,14 @@
+const directionToDegrees = {
+	"N" :   0,
+	"E" :  90,
+	"S" : 180,
+	"W" : 270,
+	"NE":  45,
+	"SE": 135,
+	"SW": 225,
+	"NW": 315
+};
+
 function populateTable(data) {
 	const tableBody = document.getElementById('dataBody');
 	const sources = {
@@ -11,7 +22,7 @@ function populateTable(data) {
 		const row = document.createElement('tr');
 		const temperature = entry.temperature ? (entry.temperature + (!entry.temperatureFromMeasurement || Math.round(Math.abs(entry.temperature)) == Math.abs(entry.temperatureFromMeasurement) ? "" : (" ("+entry.temperatureFromMeasurement+")"))) : "";
 		const windSpeed = entry.windSpeed ? (entry.windSpeed + (!entry.windSpeedFromComfort || (entry.windSpeed == entry.windSpeedFromComfort) ? "" : (" ("+entry.windSpeedFromComfort+")"))) : "";
-		row.innerHTML = `<td><b>${entry.date.getHours() ? (entry.date.getHours() + ":00") : ""}</b><br />${entry.date.getFullYear()}-${entry.date.getMonth() + 1}-${entry.date.getDate()}</td><td>${temperature}</td><td>${entry.feelsLike || ""}</td><td>${entry.source == "snow" ? ("<b>нов валеж: " + entry.newSnow + "<br />тип: " + entry.newType + "<br />снежна покривка: " + (entry.snowCover || "0")) : entry.status || ""}<b/></td><td>${windSpeed}${entry.windDirection ? ", " + entry.windDirection + `<br /><img src='images/${entry.windDirection}.png' />` : ""}</td>
+		row.innerHTML = `<td><b>${entry.date.getHours() ? (entry.date.getHours() + ":00") : ""}</b><br />${entry.date.getFullYear()}-${entry.date.getMonth() + 1}-${entry.date.getDate()}</td><td>${temperature}</td><td>${entry.feelsLike || ""}</td><td>${entry.source == "snow" ? ("<b>нов валеж: " + entry.newSnow + "<br />тип: " + entry.newType + "<br />снежна покривка: " + (entry.snowCover || "0")) : entry.status || ""}<b/></td><td>${windSpeed}${entry.windDirection ? ", " + entry.windDirection + `<br /><span style="font-size: 30px; color: red; transform: rotate(${directionToDegrees[entry.windDirection] + 90}deg); display: inline-block;">&#x27a3;</span>` : ""}</td>
 		<td>${entry.humidity || ""}</td><td>${entry.pressure || ""}</td><td>${entry.cloud || ""}</td><td>${entry.comfortIndex || ""}</td>
 		<td>${entry.recomendedEquipment || ""}</td><td>данни: <a href="../../data/meteo/vitosha/measurement/${entry.date.getFullYear()}.html" target="_blank">измервания</a>, <a href="../../data/meteo/vitosha/comfort/${entry.date.getFullYear()}.html" target="_blank">комфорт</a>, <a href="../../data/meteo/vitosha/snow/${entry.date.getFullYear()}.html" target="_blank">сняг</a><br />${sources[entry.source]}</td>`;
 		tableBody.appendChild(row);
@@ -63,13 +74,24 @@ function populateChart(data) {
 					parsing: {
 						yAxisKey: 'windSpeed'
 					},
+					// or via plugin https://jsfiddle.net/simonbrunel/cmL6agn0/
 					pointStyle: element => {
-						if (["S", "N", "W", "E", "SW", "NW", "NE", "SE"].includes(element.raw.windDirection)) {
-							var cloud = new Image();
-							cloud.src = `images/${element.raw.windDirection}.png`;
-							return cloud;
-						}
-						return "circle"
+						const result = document.createElement('canvas');
+						const ctx = result.getContext('2d');
+						const radius = 30;
+						result.height = 2 * radius;
+						result.width = 2 * radius;
+						ctx.translate(radius - 2 ,radius);
+						ctx.fillStyle = "white";
+						ctx.beginPath();
+						ctx.arc(0, 0, radius / 2, 0, 2 * Math.PI);
+						ctx.fill();
+						ctx.font = radius + "px Arial";
+						ctx.fillStyle = "green";
+						ctx.rotate(((directionToDegrees[element.raw.windDirection] + 90) * Math.PI) / 180);
+						ctx.fillText('\u27a3', -12, 10);
+
+						return result;
 					},
 				},
 				{
@@ -145,14 +167,52 @@ function populateChart(data) {
 		options: {
 			responsive: true,
 			scales: {
-				'y-axis-humidity': {
+				'y-axis-temperature': {
 					position: 'right',
+					display: "auto",
+					title: {
+						display: true,
+						text: 'Temperature'
+					},
+					grid: {
+						color: "red"
+					},
+				},
+				'y-axis-windSpeed': {
+					position: 'right',
+					display: "auto",
+					title: {
+						display: true,
+						text: 'Speed'
+					},
+					grid: {
+						color: "#00FF00"
+					},
+				},
+				'y-axis-humidity': {
+					position: 'left',
+					display: "auto",
+					title: {
+						display: true,
+						text: 'Humidity'
+					},
 				},
 				'y-axis-pressure': {
-					position: 'right',
+					position: 'left',
+					display: "auto",
+					title: {
+						display: true,
+						text: 'Pressure'
+					},
 				},
 				'y-axis-cloud': {
-					position: 'right',
+					position: 'left',
+					display: "auto",
+					suggestedMin: 0,
+					title: {
+						display: true,
+						text: 'Clouds'
+					},
 				},
 			},
 			tooltips: {
