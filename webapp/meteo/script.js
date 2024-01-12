@@ -259,11 +259,11 @@ function convertType(type) {
 }
 
 function parseSnow(html) {
-	const result = /<tr><td>([^<]+)<\/td><td>([^<]+)<\/td><td>([^<]+)<\/td><td>([^<]+)<\/td><\/tr>/.exec(html);
+	const result = /<tr><td>([^<]+)<\/td><td>([^<]*)<\/td><td>([^<]+)<\/td><td>([^<]*)<\/td><\/tr>/.exec(html);
 	const dateRaw = /(\d\d?)\.(\d\d?)\.(\d+\d+\d+\d+)/.exec(result[1])
 	// the date here is the day before but we want to see it like the reading is for "this morning"
 	const datetime = new Date(new Date(`${dateRaw[3]}-${dateRaw[2]}-${dateRaw[1]}`).getTime() + 24 * 60 * 60 * 1000);
-	return {date: datetime, newSnow: result[2], newType: convertType(result[3]) || result[3], snowCover: result[4], source: "snow"};
+	return {date: datetime, newSnow: result[2] || 0, newType: convertType(result[3]) || result[3], snowCover: result[4], source: "snow"};
 }
 
 
