@@ -367,7 +367,7 @@ function loadData() {
 	
 	const toDate = new Date(document.getElementById('toDate').value || new Date());
 	toDate.setHours(23, 59, 59);
-	const fromDate = new Date(document.getElementById('fromDate').value || new Date(Date.now() - 14 * 24 * 60 * 60 * 1000));
+	const fromDate = new Date(document.getElementById('fromDate').value || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
 	fromDate.setHours(0, 0, 0);
 
 	const fromYear = fromDate.getFullYear();
