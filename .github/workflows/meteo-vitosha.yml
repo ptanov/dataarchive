@@ -69,19 +69,21 @@ jobs:
           snow_date="$(echo "${snow_response}" | grep "Ежедневни данни за снежната покривка" | sed -nE 's/.*\s([0-9][0-9]?\.[0-9][0-9]?\.[0-9][0-9][0-9][0-9]).*/\1/p' || true)"
           if [ "${snow_date}" != "" ]; then
             snow_info="$(echo "${snow_response}" | grep -A 2 "Черни връх" | tail -n 1 | sed -nE 's!.*>([0-9]*)\|([^|]+)\|[^0-9]*([0-9]*)[^0-9]*.*!<td>\1</td><td>\2</td><td>\3</td>!p')"
-            snow_newdata="<tr><td>${snow_date}</td>${snow_info}</tr>"
+            if [ "${snow_info}" != "" ]; then
+              snow_newdata="<tr><td>${snow_date}</td>${snow_info}</tr>"
 
-            snow_targetfile="${basefolder}/snow/$(date +%Y).html"
-            if [ -f "${snow_targetfile}" ]; then
-              snow_olddata="$(tail -n1 "${snow_targetfile}" || true)"
-            else
-              snow_olddata="$(tail -n1 "${basefolder}/snow/$(( $(date +%Y) - 1 )).html" || true)"
-            fi
+              snow_targetfile="${basefolder}/snow/$(date +%Y).html"
+              if [ -f "${snow_targetfile}" ]; then
+                snow_olddata="$(tail -n1 "${snow_targetfile}" || true)"
+              else
+                snow_olddata="$(tail -n1 "${basefolder}/snow/$(( $(date +%Y) - 1 )).html" || true)"
+              fi
 
-            if [ "${snow_newdata}" != "${snow_olddata}" ]; then
-              changes="true"
-              mkdir -p "$(dirname "${snow_targetfile}")"
-              echo "${snow_newdata}" >> "${snow_targetfile}"
+              if [ "${snow_newdata}" != "${snow_olddata}" ]; then
+                changes="true"
+                mkdir -p "$(dirname "${snow_targetfile}")"
+                echo "${snow_newdata}" >> "${snow_targetfile}"
+              fi
             fi
           fi
 
