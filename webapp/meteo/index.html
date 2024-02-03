@@ -32,20 +32,25 @@
 
     <div class="filter-section">
       <label for="fromDate">From:</label>
-      <input type="date" id="fromDate">
+      <input type="date" id="fromDate" onchange="loadData()">
       <label for="toDate">To:</label>
-      <input type="date" id="toDate">
+      <input type="date" id="toDate" onchange="loadData()">
       <label for="sortOrder">Sort:</label>
-      <select id="sortOrder">
+      <select id="sortOrder" onchange="loadData()">
         <option value="desc">Newest First</option>
         <option value="asc">Oldest First</option>
       </select>
       <label for="units">Units:</label>
-      <select id="units">
+      <select id="units" onchange="loadData()">
         <option value="kmh">KM/H</option>
         <option value="ms">M/S</option>
       </select>
       <button onclick="loadData()">Apply</button>
+      <div>
+            <button onclick="setInterval(5);loadData()">Last 5 days</button>
+            <button onclick="setInterval(7);loadData()">Last 7 days</button>
+            <button onclick="setInterval(14);loadData()">Last 14 days</button>
+      </div>
     </div>
     <div class="chart-container">
       <canvas id="chart"></canvas>

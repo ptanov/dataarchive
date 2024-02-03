@@ -9,6 +9,63 @@ const directionToDegrees = {
 	"NW": 315
 };
 
+const STATUS_MODIFIERS = [
+	{
+		check: (status) => ("<img src='https://info.meteo.bg/i/meteo/naborizm/image28.gif'>мъгла" === status),
+		tableModifier: (status) => "<img src='https://info.meteo.bg/i/meteo/naborizm/image28.gif'>(лека) мъгла",
+		graphModifier: (status, image) => {
+			const canvas = document.createElement('canvas');
+			canvas.width = image.width;
+			canvas.height = image.height;
+			const ctx = canvas.getContext('2d');
+			ctx.drawImage(image, 0, 0, image.width, image.height);
+
+			ctx.beginPath();
+			ctx.moveTo(canvas.width / 2, 4);
+			ctx.lineTo(canvas.width / 2, canvas.height - 2);
+			ctx.lineWidth = 3;
+			ctx.strokeStyle = '#ff0000';
+			ctx.stroke();
+
+			return canvas;
+		}
+	},
+];
+
+function modifyStatus(status) {
+	for (modifier of STATUS_MODIFIERS) {
+		if (modifier.check(status)) {
+			return modifier.tableModifier(status);
+		}
+	}
+	return status;
+}
+
+function modifyPointStyle(status, image) {
+	for (modifier of STATUS_MODIFIERS) {
+		if (modifier.check(status)) {
+			return modifier.graphModifier(status, image);
+		}
+	}
+	return image;
+}
+
+function chooseTemperature(temperature, temperatureFromMeasurement) {
+	if (!temperature && !temperatureFromMeasurement) {
+		return "";
+	}
+	if (temperature && !temperatureFromMeasurement) {
+		return temperature;
+	}
+	if (!temperature && temperatureFromMeasurement) {
+		return temperatureFromMeasurement;
+	}
+	if (Math.round(Math.abs(temperature)) == Math.abs(temperatureFromMeasurement)) {
+		return temperature;
+	}
+	return `${temperatureFromMeasurement} (${temperature})`;
+}
+
 function populateTable(data) {
 	const tableBody = document.getElementById('dataBody');
 	const sources = {
@@ -20,9 +77,9 @@ function populateTable(data) {
 	tableBody.innerHTML = '';
 	data.forEach(entry => {
 		const row = document.createElement('tr');
-		const temperature = entry.temperature ? (entry.temperature + (!entry.temperatureFromMeasurement || Math.round(Math.abs(entry.temperature)) == Math.abs(entry.temperatureFromMeasurement) ? "" : (" ("+entry.temperatureFromMeasurement+")"))) : "";
-		const windSpeed = entry.windSpeed ? (entry.windSpeed + (!entry.windSpeedFromComfort || (entry.windSpeed == entry.windSpeedFromComfort) ? "" : (" ("+entry.windSpeedFromComfort+")"))) : "";
-		row.innerHTML = `<td><b>${entry.date.getHours() ? (entry.date.getHours() + ":00") : ""}</b><br />${entry.date.getFullYear()}-${entry.date.getMonth() + 1}-${entry.date.getDate()}</td><td>${temperature}</td><td>${entry.feelsLike || ""}</td><td>${entry.source == "snow" ? ("<b>нов валеж: " + entry.newSnow + "<br />тип: " + entry.newType + "<br />снежна покривка: " + (entry.snowCover || "0")) : entry.status || ""}<b/></td><td>${windSpeed}${entry.windDirection ? ", " + entry.windDirection + `<br /><span style="font-size: 30px; color: red; transform: rotate(${directionToDegrees[entry.windDirection] + 90}deg); display: inline-block;">&#x27a3;</span>` : ""}</td>
+		const temperature = chooseTemperature(entry.temperature, entry.temperatureFromMeasurement);
+		const windSpeed = (entry.windSpeed || entry.windSpeed == 0) ? (entry.windSpeed + (!entry.windSpeedFromComfort || (entry.windSpeed == entry.windSpeedFromComfort) ? "" : (" ("+entry.windSpeedFromComfort+")"))) : "";
+		row.innerHTML = `<td><b>${entry.date.getHours() ? (entry.date.getHours() + ":00") : ""}</b><br />${entry.date.getFullYear()}-${entry.date.getMonth() + 1}-${entry.date.getDate()}</td><td>${temperature}</td><td>${entry.feelsLike || ""}</td><td>${entry.source == "snow" ? ("<b>нов валеж: " + entry.newSnow + "<br />тип: " + entry.newType + "<br />снежна покривка: " + (entry.snowCover || "0")) : modifyStatus(entry.status) || ""}<b/></td><td>${windSpeed}${entry.windDirection ? ", " + entry.windDirection + `<br /><span style="font-size: 30px; color: red; transform: rotate(${directionToDegrees[entry.windDirection] + 90}deg); display: inline-block;">${entry.windDirection != "тихо" ? "&#x27a3;" : "o"}</span>` : ""}</td>
 		<td>${entry.humidity || ""}</td><td>${entry.pressure || ""}</td><td>${entry.cloud || ""}</td><td>${entry.comfortIndex || ""}</td>
 		<td>${entry.recomendedEquipment || ""}</td><td>данни: <a href="../../data/meteo/vitosha/measurement/${entry.date.getFullYear()}.html" target="_blank">измервания</a>, <a href="../../data/meteo/vitosha/comfort/${entry.date.getFullYear()}.html" target="_blank">комфорт</a>, <a href="../../data/meteo/vitosha/snow/${entry.date.getFullYear()}.html" target="_blank">сняг</a><br />${sources[entry.source]}</td>`;
 		tableBody.appendChild(row);
@@ -89,7 +146,7 @@ function populateChart(data) {
 						ctx.font = radius + "px Arial";
 						ctx.fillStyle = "green";
 						ctx.rotate(((directionToDegrees[element.raw.windDirection] + 90) * Math.PI) / 180);
-						ctx.fillText('\u27a3', -12, 10);
+						ctx.fillText(element.raw.windDirection != "тихо" ? '\u27a3' : 'o', -12, 10);
 
 						return result;
 					},
@@ -131,9 +188,9 @@ function populateChart(data) {
 							const result = /.*'([^']+)'.*/.exec(element.raw.status);
 							var cloud = new Image();
 							cloud.src = result[1];
-							cloud.height=30;
-							cloud.width=30*75/60;
-							return cloud;
+							cloud.height = 30;
+							cloud.width = 30*75/60;
+							return modifyPointStyle(element.raw.status, cloud);
 						}
 						return "circle"
 					},
@@ -177,6 +234,8 @@ function populateChart(data) {
 					grid: {
 						color: "red"
 					},
+					suggestedMin: -30,
+					suggestedMax: 30,
 				},
 				'y-axis-windSpeed': {
 					position: 'right',
@@ -188,6 +247,8 @@ function populateChart(data) {
 					grid: {
 						color: "#00FF00"
 					},
+					suggestedMin: 0,
+					suggestedMax: 100,
 				},
 				'y-axis-humidity': {
 					position: 'left',
@@ -196,6 +257,8 @@ function populateChart(data) {
 						display: true,
 						text: 'Humidity'
 					},
+					suggestedMin: 0,
+					suggestedMax: 100,
 				},
 				'y-axis-pressure': {
 					position: 'left',
@@ -204,15 +267,18 @@ function populateChart(data) {
 						display: true,
 						text: 'Pressure'
 					},
+					suggestedMin: 750,
+					suggestedMax: 800,
 				},
 				'y-axis-cloud': {
 					position: 'left',
 					display: "auto",
-					suggestedMin: 0,
 					title: {
 						display: true,
 						text: 'Clouds'
 					},
+					min: -1,
+					max: 11,
 				},
 			},
 			tooltips: {
@@ -227,7 +293,7 @@ function populateChart(data) {
 					callbacks: {
 						afterLabel: context=>{
 							if (context.dataset.parsing.yAxisKey == "cloud") {
-								const result = /.*>(.*)/.exec(context.raw.status);
+								const result = /.*>(.*)/.exec(modifyStatus(context.raw.status));
 								return result[1];
 							}
 							if (context.dataset.parsing.yAxisKey == "windSpeed") {
@@ -318,23 +384,33 @@ function convertType(type) {
 	return result;
 }
 
+function padWithZero(number) {
+	if (number > 9) {
+		return number;
+	}
+	return "0" + number;
+}
+
 function parseSnow(html) {
 	const result = /<tr><td>([^<]+)<\/td><td>([^<]*)<\/td><td>([^<]+)<\/td><td>([^<]*)<\/td><\/tr>/.exec(html);
 	const dateRaw = /(\d\d?)\.(\d\d?)\.(\d+\d+\d+\d+)/.exec(result[1])
 	// the date here is the day before but we want to see it like the reading is for "this morning"
-	const datetime = new Date(new Date(`${dateRaw[3]}-${dateRaw[2]}-${dateRaw[1]}`).getTime() + 24 * 60 * 60 * 1000);
-	return {date: datetime, newSnow: result[2] || 0, newType: convertType(result[3]) || result[3], snowCover: result[4], source: "snow"};
+	const datetime = new Date(new Date(`${dateRaw[3]}-${padWithZero(dateRaw[2])}-${padWithZero(dateRaw[1])}`).getTime() + 24 * 60 * 60 * 1000);
+	return {date: datetime, newSnow: (result[2] || 0)/10, newType: convertType(result[3]) || result[3], snowCover: result[4], source: "snow"};
 }
 
+function compareEntry(a, b) {
+	return (b.date - a.date) || (b.hour - a.hour) || (a.source == "snow" ? 1 : -1);
+}
 
 function filterSortAndGroupData(all, fromDate, toDate) {
 	const sortOrder = document.getElementById('sortOrder').value;
 
 	let filteredData = all.filter(entry => entry.date >= fromDate && entry.date <= toDate);
 	if (sortOrder === 'asc') {
-		filteredData.sort((a, b) => (a.date > b.date ? 1 : (a.date == b.date ? (a.hour > b.hour ? 1 : -1) : -1)));
+		filteredData.sort((a, b) => compareEntry(a, b) * -1);
 	} else {
-		filteredData.sort((a, b) => (a.date < b.date ? 1 : (a.date == b.date ? (a.hour < b.hour ? 1 : -1) : -1)));
+		filteredData.sort((a, b) => compareEntry(a, b));
 	}
 	for (let i = filteredData.length - 1; i>0; i--) {
 		next = filteredData[i];
@@ -360,6 +436,13 @@ function filterSortAndGroupData(all, fromDate, toDate) {
 	return filteredData;
 }
 
+function setInterval(days) {
+	const toDate = new Date();
+	document.getElementById('toDate').value = toDate.toISOString().substr(0, 10);
+	const fromDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+	document.getElementById('fromDate').value = fromDate.toISOString().substr(0, 10);
+}
+
 function loadData() {
 	const units = document.getElementById('units').value;
 	const windHeader = document.getElementById('windHeader');
@@ -367,7 +450,7 @@ function loadData() {
 	
 	const toDate = new Date(document.getElementById('toDate').value || new Date());
 	toDate.setHours(23, 59, 59);
-	const fromDate = new Date(document.getElementById('fromDate').value || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
+	const fromDate = new Date(document.getElementById('fromDate').value || new Date(Date.now() - 5 * 24 * 60 * 60 * 1000));
 	fromDate.setHours(0, 0, 0);
 
 	const fromYear = fromDate.getFullYear();
