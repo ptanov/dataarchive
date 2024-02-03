@@ -66,8 +66,10 @@ function chooseTemperature(temperature, temperatureFromMeasurement) {
 	return `${temperatureFromMeasurement} (${temperature})`;
 }
 
-function populateTable(data) {
+function populateTable(data, units) {
 	const tableBody = document.getElementById('dataBody');
+	document.getElementById('windHeader').innerHTML = `Вятър, ${units}`
+
 	const sources = {
 		"snow": "<a target='_blank' href='https://hydro.bg/bg/t1.php?ime=&gr=data/&gn=sniag'>НИМХ, снежна покривка</a>, <a target='_blank' href='https://hydro.bg/bg/t1.php?ime=&gr=data/&gn=sniag#:~:text=%D0%98%D0%B7%D0%BF%D0%BE%D0%BB%D0%B7%D0%B2%D0%B0%D0%BD%D0%B8%20%D1%81%D0%B8%D0%BC%D0%B2%D0%BE%D0%BB%D0%B8%20%D0%B7%D0%B0%20%D0%B2%D0%B8%D0%B4%20%D0%BD%D0%B0%20%D0%B2%D0%B0%D0%BB%D0%B5%D0%B6%20%D0%B2%20%D1%81%D1%80%D0%B5%D0%B4%D0%BD%D0%BE%20%D0%BF%D0%BE%D0%B4%D0%BF%D0%BE%D0%BB%D0%B5'>легенда</a>",
 		"measurement": "<a target='_blank' href='https://weather.bg/index.php?koiFail=tekushti&lng=0#:~:text=%D0%9F%D0%BE%D1%81%D0%BB%D0%B5%D0%B4%D0%BD%D0%B8%20%D0%B8%D0%B7%D0%BC%D0%B5%D1%80%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-,%D0%A2%D0%B0%D0%B1%D0%BB%D0%B8%D1%86%D0%B0%20%D1%81%20%D0%B4%D0%B0%D0%BD%D0%BD%D0%B8%D1%82%D0%B5,-%D0%9B%D0%B5%D0%B3%D0%B5%D0%BD%D0%B4%D0%B0%20%2D%20%D0%B8%D0%B7%D0%BC%D0%B5%D1%80%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F'>НИМX измервания</a>, <a target='_blank' href='https://weather.bg/index.php?koiFail=tekushti&lng=0#:~:text=%D0%9B%D0%B5%D0%B3%D0%B5%D0%BD%D0%B4%D0%B0%20%2D%20%D0%B8%D0%B7%D0%BC%D0%B5%D1%80%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F'>легенда</a>",
@@ -86,7 +88,7 @@ function populateTable(data) {
 	});
 }
 
-function populateChart(data) {
+function populateChart(data, units) {
 	const shouldReverse = document.getElementById('sortOrder').value == "desc";
 	const filtered = (shouldReverse?data.reverse():data).filter(a => a.source != "snow");
 	filtered.forEach(entry => entry.x = `${entry.date.getFullYear()}-${entry.date.getMonth() + 1}-${entry.date.getDate()}${entry.date.getHours() ? (" " + entry.date.getHours() + ":00") : ""}`);
@@ -242,13 +244,13 @@ function populateChart(data) {
 					display: "auto",
 					title: {
 						display: true,
-						text: 'Speed'
+						text: 'Speed ' + units
 					},
 					grid: {
 						color: "#00FF00"
 					},
 					suggestedMin: 0,
-					suggestedMax: 100,
+					suggestedMax: units == "kmh" ? 100 : 30,
 				},
 				'y-axis-humidity': {
 					position: 'left',
@@ -445,8 +447,6 @@ function setInterval(days) {
 
 function loadData() {
 	const units = document.getElementById('units').value;
-	const windHeader = document.getElementById('windHeader');
-	windHeader.innerHTML = `Вятър, ${units}`
 	
 	const toDate = new Date(document.getElementById('toDate').value || new Date());
 	toDate.setHours(23, 59, 59);
@@ -473,8 +473,8 @@ function loadData() {
 	Promise.all([measurement, comfort, snow]).then(function(valArray) {
 		const result = filterSortAndGroupData(valArray.flat(), fromDate, toDate);
 		
-		populateTable(result);
-		populateChart(result);
+		populateTable(result, units);
+		populateChart(result, units);
 	});
 
 }
