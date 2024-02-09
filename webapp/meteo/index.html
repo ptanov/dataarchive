@@ -12,7 +12,7 @@
   <div class="container">
     <h1>Data Archive Meteo Vitosha</h1>
     <div class="panel">
-      <div class="panel-title" onclick="togglePanel('camforecast')">Камери и прогноза (натисни за да се покажат)</div>
+      <div class="panel-title" id="camforecasttitle" onclick="togglePanel('camforecast')">Камери и прогноза (натисни за да се покажат)</div>
       <div class="panel-content" id="camforecast">
         <a href="https://www.windy.com/-Webcams/Bulgaria/Sofia-City/Sofia/Aleko-Hut/webcams/1520923085?42.583,23.241,13" target="_blank">30 дена/24 часа Архив камера Алеко</a> (<a href="https://www.motensport.com/m/" target="_blank">Камера Мотен</a> <a href="https://weather-webcam.eu/webcam-hija-aleko/" target="_blank">Камери Алеко</a>)<br />
         <a href="https://www.meteoblue.com/bg/%D0%B2%D1%80%D0%B5%D0%BC%D0%B5%D1%82%D0%BE/webcams/%d0%a7%d0%b5%d1%80%d0%bd%d0%b8-%d0%b2%d1%80%d1%8a%d1%85_%d0%91%d1%8a%d0%bb%d0%b3%d0%b0%d1%80%d0%b8%d1%8f_732540" target="_blank">Камери около Витоша</a><br />
@@ -23,6 +23,38 @@
         <a href="https://meteo.rocks/forecast/15/%D0%B2%D1%80.%20%D0%A7%D0%B5%D1%80%D0%BD%D0%B8%20%D0%B2%D1%80%D1%8A%D1%85%202290%D0%BC" target="_blank">още данни от meteo.rocks</a>, <a href="https://meteo.rocks/station/vitosha-gorno-plato/28" target="_blank">Горно плато</a>, <a href="https://meteo.rocks/station/vitosha-hizha-aleko-(baza-pss)/12" target="_blank">Алеко</a><br />
         <a href="https://www.meteoblue.com/bg/%D0%B2%D1%80%D0%B5%D0%BC%D0%B5%D1%82%D0%BE/%D1%81%D0%B5%D0%B4%D0%BC%D0%B8%D1%86%D0%B0/%d0%a7%d0%b5%d1%80%d0%bd%d0%b8-%d0%b2%d1%80%d1%8a%d1%85_%d0%91%d1%8a%d0%bb%d0%b3%d0%b0%d1%80%d0%b8%d1%8f_732540" target="_blank" style="display: block;">Времето Черни връх - meteoblue</a><br />
         <img src="https://my.meteoblue.com/images/meteogram?temperature_units=C&wind_units=kmh&precipitation_units=mm&winddirection=3char&iso2=bg&lat=42.5667&lon=23.2833&asl=2270&tz=Europe%2FSofia&apikey=jhMJTOUVRNvs25m4&lang=bg&location_name=%D0%A7%D0%B5%D1%80%D0%BD%D0%B8+%D0%B2%D1%80%D1%8A%D1%85&windspeed_units=kmh&sig=ccbd5c9b1095c713eb68731b6e4f2ed8"  alt="Meteogram - 5 days - Черни връх"><a href="https://www.meteoblue.com/bg/%D0%B2%D1%80%D0%B5%D0%BC%D0%B5%D1%82%D0%BE/%D1%81%D0%B5%D0%B4%D0%BC%D0%B8%D1%86%D0%B0/%d0%a7%d0%b5%d1%80%d0%bd%d0%b8-%d0%b2%d1%80%d1%8a%d1%85_%d0%91%d1%8a%d0%bb%d0%b3%d0%b0%d1%80%d0%b8%d1%8f_732540" target="_blank" rel="noreferrer" style="display: block;">Времето Черни връх - meteoblue</a>
+
+        <script id="wg_fwdg_424561_100_1">
+        (function (window, document) {
+          var loader = function () {
+            var arg = ["s=424561" ,"m=100","uid=wg_fwdg_424561_100_1" ,"wj=kmh" ,"tj=c" ,"waj=m" ,"tij=cm" ,"odh=0" ,"doh=24" ,"fhours=240" ,"hrsm=2" ,"vt=fcst_graph" ,"lng=en" ,"idbs=1" ,"p="];
+            var script = document.createElement("script");
+            var tag = document.getElementsByTagName("script")[0];
+            script.src = "https://www.windguru.cz/js/widget.php?"+(arg.join("&"));
+            tag.parentNode.insertBefore(script, tag);
+          };
+          const title = document.getElementById("camforecasttitle");
+          title.addEventListener("click", loader);
+          title.addEventListener("click", () => {title.removeEventListener("click", loader);});
+          // window.addEventListener ? window.addEventListener("load", loader, false) : window.attachEvent("onload", loader);
+        })(window, document);
+        </script>
+        <script id="wg_fwdg_424561_100_2">
+        (function (window, document) {
+          var loader = function () {
+            var arg = ["s=424561" ,"m=100","uid=wg_fwdg_424561_100_2" ,"wj=kmh" ,"tj=c" ,"waj=m" ,"tij=cm" ,"odh=0" ,"doh=24" ,"fhours=240" ,"hrsm=1" ,"vt=forecasts" ,"lng=en" ,"idbs=1" ,"p=WINDSPD,GUST,SMER,TMP,TMPE,WCHILL,FLHGT,CDC,APCP1s,SLP,RH,RATING"];
+            var script = document.createElement("script");
+            var tag = document.getElementsByTagName("script")[0];
+            script.src = "https://www.windguru.cz/js/widget.php?"+(arg.join("&"));
+            tag.parentNode.insertBefore(script, tag);
+          };
+          const title = document.getElementById("camforecasttitle");
+          title.addEventListener("click", loader);
+          title.addEventListener("click", () => {title.removeEventListener("click", loader);});
+          // window.addEventListener ? window.addEventListener("load", loader, false) : window.attachEvent("onload", loader);
+        })(window, document);
+        </script>
+
       </div>
     </div>
 
