@@ -9,6 +9,15 @@ const directionToDegrees = {
 	"NW": 315
 };
 
+/*
+We need modifiers because:
+
+1) there is same status text for different images, e.g. both
+https://info.meteo.bg/i/meteo/naborizm/image05.gif and https://info.meteo.bg/i/meteo/naborizm/image28.gif are described as "fog"
+but the second one is animated and the sun is showing (we called it "light fog").
+
+2) In chart.js images are still so this animation is lost (and we have graph modifier)
+*/
 const STATUS_MODIFIERS = [
 	{
 		check: (status) => ("<img src='https://info.meteo.bg/i/meteo/naborizm/image28.gif'>мъгла" === status),
@@ -21,9 +30,9 @@ const STATUS_MODIFIERS = [
 			ctx.drawImage(image, 0, 0, image.width, image.height);
 
 			ctx.beginPath();
-			ctx.moveTo(canvas.width / 2, 4);
-			ctx.lineTo(canvas.width / 2, canvas.height - 2);
-			ctx.lineWidth = 3;
+			ctx.moveTo(8, 8);
+			ctx.lineTo(canvas.width - 8, canvas.height - 8);
+			ctx.lineWidth = 4;
 			ctx.strokeStyle = '#ff0000';
 			ctx.stroke();
 
@@ -50,7 +59,7 @@ function modifyPointStyle(status, image) {
 	return image;
 }
 
-function chooseTemperature(temperature, temperatureFromMeasurement) {
+function chooseTemperature(temperature, temperatureFromMeasurement, singleValue) {
 	if (!temperature && !temperatureFromMeasurement) {
 		return "";
 	}
@@ -63,7 +72,7 @@ function chooseTemperature(temperature, temperatureFromMeasurement) {
 	if (Math.round(Math.abs(temperature)) == Math.abs(temperatureFromMeasurement)) {
 		return temperature;
 	}
-	return `${temperatureFromMeasurement} (${temperature})`;
+	return singleValue ? temperatureFromMeasurement : `${temperatureFromMeasurement} (${temperature})`;
 }
 
 function populateTable(data, units) {
@@ -79,15 +88,20 @@ function populateTable(data, units) {
 	tableBody.innerHTML = '';
 	data.forEach(entry => {
 		const row = document.createElement('tr');
-		const temperature = chooseTemperature(entry.temperature, entry.temperatureFromMeasurement);
+		const temperature = chooseTemperature(entry.temperature, entry.temperatureFromMeasurement, false);
 		const windSpeed = (entry.windSpeed || entry.windSpeed == 0) ? (entry.windSpeed + (!entry.windSpeedFromComfort || (entry.windSpeed == entry.windSpeedFromComfort) ? "" : (" ("+entry.windSpeedFromComfort+")"))) : "";
 		row.innerHTML = `<td><b>${entry.date.getHours() ? (entry.date.getHours() + ":00") : ""}</b><br />${entry.date.getFullYear()}-${entry.date.getMonth() + 1}-${entry.date.getDate()}</td><td>${temperature}</td><td>${entry.feelsLike || ""}</td><td>${entry.source == "snow" ? ("<b>нов валеж: " + entry.newSnow + "<br />тип: " + entry.newType + "<br />снежна покривка: " + (entry.snowCover || "0")) : modifyStatus(entry.status) || ""}<b/></td><td>${windSpeed}${entry.windDirection ? ", " + entry.windDirection + `<br /><span style="font-size: 30px; color: red; transform: rotate(${directionToDegrees[entry.windDirection] + 90}deg); display: inline-block;">${entry.windDirection != "тихо" ? "&#x27a3;" : "o"}</span>` : ""}</td>
 		<td>${entry.humidity || ""}</td><td>${entry.pressure || ""}</td><td>${entry.cloud || ""}</td><td>${entry.comfortIndex || ""}</td>
-		<td>${entry.recomendedEquipment || ""}</td><td>данни: <a href="../../data/meteo/vitosha/measurement/${entry.date.getFullYear()}.html" target="_blank">измервания</a>, <a href="../../data/meteo/vitosha/comfort/${entry.date.getFullYear()}.html" target="_blank">комфорт</a>, <a href="../../data/meteo/vitosha/snow/${entry.date.getFullYear()}.html" target="_blank">сняг</a><br />${sources[entry.source]}</td>`;
+		<td>${entry.recomendedEquipment || ""}</td><td>${linkToRawData(entry.date)}${sources[entry.source]}</td>`;
 		tableBody.appendChild(row);
 	});
 }
 
+function linkToRawData(date) {
+	const year = date.getFullYear();
+	const highlight = `${date.getDate()}.${padWithZero(date.getMonth() + 1)}.${date.getFullYear()}`;
+	return `данни: <a href="../../data/meteo/vitosha/measurement/${year}.html#:~:text=${highlight}" target="_blank">измервания</a>, <a href="../../data/meteo/vitosha/comfort/${year}.html#:~:text=${highlight}" target="_blank">комфорт</a>, <a href="../../data/meteo/vitosha/snow/${year}.html#:~:text=${highlight.startsWith(0) ? highlight.substring(1) : highlight}" target="_blank">сняг</a><br />`;
+}
 function populateChart(data, units) {
 	const shouldReverse = document.getElementById('sortOrder').value == "desc";
 	const filtered = (shouldReverse?data.reverse():data).filter(a => a.source != "snow");
@@ -103,7 +117,7 @@ function populateChart(data, units) {
 			datasets: [
 				{
 					label: 'Temperature',
-					data: filtered,
+					data: filtered.map(a => ({x: a.x, temperature: chooseTemperature(a.temperature, a.temperatureFromMeasurement, true)})),
 					borderColor: 'rgb(255, 99, 132)',
 					backgroundColor: 'rgba(255, 99, 132, 0.2)',
 					yAxisID: 'y-axis-temperature',
