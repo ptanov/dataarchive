@@ -99,8 +99,10 @@ function populateTable(data, units) {
 
 function linkToRawData(date) {
 	const year = date.getFullYear();
-	const highlight = `${date.getDate()}.${padWithZero(date.getMonth() + 1)}.${date.getFullYear()}`;
-	return `данни: <a href="../../data/meteo/vitosha/measurement/${year}.html#:~:text=${highlight}" target="_blank">измервания</a>, <a href="../../data/meteo/vitosha/comfort/${year}.html#:~:text=${highlight}" target="_blank">комфорт</a>, <a href="../../data/meteo/vitosha/snow/${year}.html#:~:text=${highlight.startsWith(0) ? highlight.substring(1) : highlight}" target="_blank">сняг</a><br />`;
+	const highlight = `${padWithZero(date.getDate())}.${padWithZero(date.getMonth() + 1)}.${date.getFullYear()}`;
+	const dateSnow = new Date(date.getTime() - 24 * 60 * 60 * 1000);
+	const highlightSnow = `${dateSnow.getDate()}.${padWithZero(dateSnow.getMonth() + 1)}.${dateSnow.getFullYear()}`;
+	return `данни: <a href="../../data/meteo/vitosha/measurement/${year}.html#:~:text=${highlight}" target="_blank">измервания</a>, <a href="../../data/meteo/vitosha/comfort/${year}.html#:~:text=${highlight}" target="_blank">комфорт</a>, <a href="../../data/meteo/vitosha/snow/${year}.html#:~:text=${highlightSnow}" target="_blank">сняг</a><br />`;
 }
 function populateChart(data, units) {
 	const shouldReverse = document.getElementById('sortOrder').value == "desc";
