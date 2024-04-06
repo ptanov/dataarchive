@@ -39,7 +39,7 @@ jobs:
           fi
 
           # comfort
-          comfort_newdata="$(echo "${response}" | tr -d '\n' | grep -Po "<tr>        <td>Черни връх</td>.*?</tr>" || true)"
+          comfort_newdata="$(echo "${response}" | tr -d '\n' | grep -Po "<tr>        <td>Черни връх</td>.*?</tr>" | grep -P "<td.+<td.+<td.+<td.+<td.+<td.+<td.+<td.+" || true)"
           if [ "${comfort_newdata}" != "" ]; then
             comfort_date="$(echo "${response}" | grep 'Индекс на комфорт в синоптичните ни станции на' | sed -n 's/.*Индекс на комфорт в синоптичните ни станции на \([^.]*\)\.\([^.]*\)\.\([^.]*\) в \([^ ]*\).*/\3\2\1 \4/p')"
             if [ "$(($(date +%s)-$(date +%s -d "${comfort_date}") > -(20 * 60 * 60)))" == "0" ]; then
@@ -62,6 +62,33 @@ jobs:
               changes="true"
               mkdir -p "$(dirname "${comfort_targetfile}")"
               echo "${comfort_newdata}" >> "${comfort_targetfile}"
+            fi
+          fi
+
+          # ground temperature
+          ground_temperature_newdata="$(echo "${response}" | tr -d '\n' | grep -Po "<tr>        <td>Черни връх</td>.*?</tr>" | grep -P "<td.+<td.+<td.+<td.+<td.+<td.+" | grep -vP "<td.+<td.+<td.+<td.+<td.+<td.+<td.+<td.+" || true)"
+          if [ "${ground_temperature_newdata}" != "" ]; then
+            ground_temperature_date="$(echo "${response}" | grep 'Температура на земната повърхност в синоптичните ни станции на' | sed -n 's/.*Температура на земната повърхност в синоптичните ни станции на \([^.]*\)\.\([^.]*\)\.\([^.]*\) в \([^ ]*\).*/\3\2\1 \4/p')"
+            if [ "$(($(date +%s)-$(date +%s -d "${ground_temperature_date}") > -(20 * 60 * 60)))" == "0" ]; then
+              # too far in the future
+              # every night at 11p.m. the operator creates a dublicated record e.g. on 08.01 there will be one extra record 09.01 23:00 (in the future) that is exactly the same as the one at 08.01 23:00
+              # so we are removing one day
+              ground_temperature_date="$(date +"%Y%m%d %H" -d @"$(( $(date +%s -d "${ground_temperature_date}") - (24 * 60 * 60) ))" )"
+            fi
+
+            ground_temperature_newdata="$(echo "${ground_temperature_newdata}" | sed -n "s|<td>Черни връх</td>|<td>Черни връх</td>$(date +'<td>%d.%m.%Y</td><td>%H</td>' -d "${ground_temperature_date}")|p")"
+
+            ground_temperature_targetfile="${basefolder}/ground_temperature/$(date +%Y).html"
+            if [ -f "${ground_temperature_targetfile}" ]; then
+              ground_temperature_olddata="$(tail -n1 "${ground_temperature_targetfile}" || true)"
+            else
+              ground_temperature_olddata="$(tail -n1 "${basefolder}/ground_temperature/$(( $(date +%Y) - 1 )).html" || true)"
+            fi
+
+            if [ "${ground_temperature_newdata}" != "${ground_temperature_olddata}" ]; then
+              changes="true"
+              mkdir -p "$(dirname "${ground_temperature_targetfile}")"
+              echo "${ground_temperature_newdata}" >> "${ground_temperature_targetfile}"
             fi
           fi
 
