@@ -204,13 +204,16 @@ function populateChart(data, units) {
 					pointStyle: element => {
 						if (element.raw.status) {
 							const result = /.*'([^']+)'.*/.exec(element.raw.status);
+							if (!result) {
+								return "star";
+							}
 							var cloud = new Image();
 							cloud.src = result[1];
 							cloud.height = 30;
 							cloud.width = 30*75/60;
 							return modifyPointStyle(element.raw.status, cloud);
 						}
-						return "circle"
+						return "circle";
 					},
 				},
 				{
@@ -312,7 +315,7 @@ function populateChart(data, units) {
 						afterLabel: context=>{
 							if (context.dataset.parsing.yAxisKey == "cloud") {
 								const result = /.*>(.*)/.exec(modifyStatus(context.raw.status));
-								return result[1];
+								return result?result[1]:"unknown";
 							}
 							if (context.dataset.parsing.yAxisKey == "windSpeed") {
 								return context.raw.windDirection;
