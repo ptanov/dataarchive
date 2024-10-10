@@ -25,12 +25,14 @@ jobs:
 
           # measurement
           measurement_newdata="$(echo "${response}" | grep -Po '<tr><td>Черни връх</td>.*?</tr>')"
+          echo "Measurement data: ${measurement_newdata}"
           measurement_targetfile="${basefolder}/measurement/$(date +%Y).html"
           if [ -f "${measurement_targetfile}" ]; then
             measurement_olddata="$(tail -n1 "${measurement_targetfile}" || true)"
           else
             measurement_olddata="$(tail -n1 "${basefolder}/measurement/$(( $(date +%Y) - 1 )).html" || true)"
           fi
+          echo "Measurement old data: ${measurement_olddata}"
 
           if [ "${measurement_newdata}" != "${measurement_olddata}" ]; then
             changes="true"
@@ -40,6 +42,7 @@ jobs:
 
           # comfort
           comfort_newdata="$(echo "${response}" | tr -d '\n' | grep -Po "<tr>        <td>Черни връх</td>.*?</tr>" | grep -P "<td.+<td.+<td.+<td.+<td.+<td.+<td.+<td.+" || true)"
+          echo "Comfort data: ${comfort_newdata}"
           if [ "${comfort_newdata}" != "" ]; then
             comfort_date="$(echo "${response}" | grep 'Индекс на комфорт в синоптичните ни станции на' | sed -n 's/.*Индекс на комфорт в синоптичните ни станции на \([^.]*\)\.\([^.]*\)\.\([^.]*\) в \([^ ]*\).*/\3\2\1 \4/p')"
             if [ "$(($(date +%s)-$(date +%s -d "${comfort_date}") > -(20 * 60 * 60)))" == "0" ]; then
@@ -67,6 +70,7 @@ jobs:
 
           # ground temperature
           ground_temperature_newdata="$(echo "${response}" | tr -d '\n' | grep -Po "<tr>        <td>Черни връх</td>.*?</tr>" | grep -P "<td.+<td.+<td.+<td.+<td.+<td.+" | grep -vP "<td.+<td.+<td.+<td.+<td.+<td.+<td.+<td.+" || true)"
+          echo "Ground temperature: ${ground_temperature_newdata}"
           if [ "${ground_temperature_newdata}" != "" ]; then
             ground_temperature_date="$(echo "${response}" | grep 'Температура на земната повърхност в синоптичните ни станции на' | sed -n 's/.*Температура на земната повърхност в синоптичните ни станции на \([^.]*\)\.\([^.]*\)\.\([^.]*\) в \([^ ]*\).*/\3\2\1 \4/p')"
             if [ "$(($(date +%s)-$(date +%s -d "${ground_temperature_date}") > -(20 * 60 * 60)))" == "0" ]; then
@@ -96,6 +100,7 @@ jobs:
           snow_response="$(curl --dns-servers '8.8.8.8,1.1.1.1,8.8.4.4,1.0.0.1' 'https://hydro.bg/bg/t1.php?ime=&gr=data/&gn=sniag')"
           echo "Snow response is: <<<${snow_response}>>>"
           snow_date="$(echo "${snow_response}" | grep "Ежедневни данни за снежната покривка" | sed -nE 's/.*\s([0-9][0-9]?\.[0-9][0-9]?\.[0-9][0-9][0-9][0-9]).*/\1/p' || true)"
+          echo "Snow date: ${snow_date}"
           if [ "${snow_date}" != "" ]; then
             snow_info="$(echo "${snow_response}" | grep -A 2 "Черни връх" | tail -n 1 | sed -nE 's!.*>([0-9]*)\|([^|]+)\|[^0-9]*([0-9]*)[^0-9]*.*!<td>\1</td><td>\2</td><td>\3</td>!p')"
             if [ "${snow_info}" != "" ]; then
@@ -116,13 +121,21 @@ jobs:
             fi
           fi
 
+          echo "Changes: ${changes} at $(date +"%Y-%m-%dT%H:%M:%S%z")"
           # commit if new data is available
           if [ "${changes}" == "true" ]; then
+            echo "Updating"
             git config --global user.name 'Meteo Vitosha workflow'
             git config --global user.email 'ptanov@users.noreply.github.com'
+            echo "Adding ${basefolder}"
             git add "${basefolder}"
+            echo "Commiting"
             git commit -m "Report at $(date +"%Y-%m-%dT%H:%M:%S%z")"
+            echo "Adding remote"
             git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
+            echo "Push..."
             git push
+            echo "Ready"
           fi
+          echo "End"
 
