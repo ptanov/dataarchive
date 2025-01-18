@@ -19,7 +19,10 @@ jobs:
       - shell: bash
         run: |
           changes="false"
-          response="$(curl --dns-servers '8.8.8.8,1.1.1.1,8.8.4.4,1.0.0.1' 'https://weather.bg/index.php?koiFail=tekushti&lng=0')"
+          curl --help || true
+          curl --help dns || true
+          response="$(curl 'https://weather.bg/index.php?koiFail=tekushti&lng=0')"
+          # response="$(curl --dns-servers '8.8.8.8,1.1.1.1,8.8.4.4,1.0.0.1' 'https://weather.bg/index.php?koiFail=tekushti&lng=0')"
           echo "Meteo response is: <<<${response}>>>"
           basefolder="data/meteo/vitosha"
 
@@ -97,7 +100,8 @@ jobs:
           fi
 
           # snow
-          snow_response="$(curl --dns-servers '8.8.8.8,1.1.1.1,8.8.4.4,1.0.0.1' 'https://hydro.bg/bg/t1.php?ime=&gr=data/&gn=sniag')"
+          snow_response="$(curl 'https://hydro.bg/bg/t1.php?ime=&gr=data/&gn=sniag')"
+          #snow_response="$(curl --dns-servers '8.8.8.8,1.1.1.1,8.8.4.4,1.0.0.1' 'https://hydro.bg/bg/t1.php?ime=&gr=data/&gn=sniag')"
           echo "Snow response is: <<<${snow_response}>>>"
           snow_date="$(echo "${snow_response}" | grep "Ежедневни данни за снежната покривка" | sed -nE 's/.*\s([0-9][0-9]?\.[0-9][0-9]?\.[0-9][0-9][0-9][0-9]).*/\1/p' || true)"
           echo "Snow date: ${snow_date}"
